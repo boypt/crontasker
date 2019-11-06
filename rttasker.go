@@ -121,6 +121,9 @@ func CronDaemon(conf string) error {
 		if line == "" {
 			continue
 		}
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
 		task, err := parseTask(line)
 		if err != nil {
 			log.Printf("Task failed to create, %v", err)
