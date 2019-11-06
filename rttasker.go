@@ -21,6 +21,27 @@ type Task struct {
 }
 
 func (t *Task) Run() {
+	if t.LastTime == 0 {
+		t.runOnce()
+	} else {
+		t.runWithDeadline()
+	}
+}
+
+func (t *Task) runOnce() {
+	log.Printf("Run %s args %v\n", t.Cmd, t.Args)
+	cmd := exec.Command(t.Cmd, t.Args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		log.Printf("Task failed with err, %v", err)
+	}
+
+	log.Printf("Task end")
+}
+
+func (t *Task) runWithDeadline() {
 
 	deadline := time.Now().Add(t.LastTime)
 
@@ -72,7 +93,7 @@ func parseTask(line string) (*Task, error) {
 
 	last, err := time.ParseDuration(cset[1])
 	if err != nil {
-		return nil, fmt.Errorf("line duration split error, %s", cset[1])
+		last = 0
 	}
 
 	cmds := strings.Split(cset[2], " ")

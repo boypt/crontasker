@@ -33,3 +33,30 @@ func TestTask_Run(t *testing.T) {
 		})
 	}
 }
+
+func TestTask_runOnce(t *testing.T) {
+	type fields struct {
+		CronSpec string
+		LastTime time.Duration
+		Cmd      string
+		Args     []string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+	}{
+		// TODO: Add test cases.
+		{"1", fields{"* * * * *", 0, "ls", []string{"/"}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			zt := &Task{
+				CronSpec: tt.fields.CronSpec,
+				LastTime: tt.fields.LastTime,
+				Cmd:      tt.fields.Cmd,
+				Args:     tt.fields.Args,
+			}
+			zt.runOnce()
+		})
+	}
+}
