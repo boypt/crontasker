@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/robfig/cron/v3"
@@ -52,6 +53,7 @@ func (t *Task) runWithDeadline() {
 		cmd := exec.Command(t.Cmd, t.Args...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
+		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 		if err := cmd.Start(); err != nil {
 			log.Printf("Task failed to start, %v", err)
@@ -62,9 +64,12 @@ func (t *Task) runWithDeadline() {
 
 		go func() {
 			<-ctx.Done()
-			log.Printf("ctx canceled, calling killing")
+			log.Printf("ctx done")
 			if cmd.Process != nil {
-				cmd.Process.Kill()
+				// kill Process Group
+				if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL); err != nil {
+					log.Printf("calling kill error %v", err)
+				}
 			}
 			return
 		}()
