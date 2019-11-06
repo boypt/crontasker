@@ -64,7 +64,7 @@ func (t *Task) Run() {
 	log.Printf("Task end")
 }
 
-func RunRtTask(line string) (*Task, error) {
+func parseTask(line string) (*Task, error) {
 	cset := strings.Split(line, "|")
 	if len(cset) != 3 {
 		return nil, fmt.Errorf("line len split error, %s", line)
@@ -85,13 +85,13 @@ func RunRtTask(line string) (*Task, error) {
 	return task, nil
 }
 
-func CronDaemon(conf string) {
+func CronDaemon(conf string) error {
 	c := cron.New(cron.WithLogger(cron.VerbosePrintfLogger(log.New(os.Stdout, "cron: ", log.LstdFlags))))
 
 	log.Printf("config: %s", conf)
 	cf, err := os.Open(conf)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	scanner := bufio.NewScanner(cf)
 	for scanner.Scan() {
@@ -100,7 +100,7 @@ func CronDaemon(conf string) {
 		if line == "" {
 			continue
 		}
-		task, err := RunRtTask(line)
+		task, err := parseTask(line)
 		if err != nil {
 			log.Printf("Task failed to create, %v", err)
 			continue
@@ -109,9 +109,12 @@ func CronDaemon(conf string) {
 	}
 	cf.Close()
 
-	for _, en := range c.Entries() {
-		log.Println(en)
+	jobs := len(c.Entries())
+	if jobs > 0 {
+		log.Printf("found %d cron jobs", jobs)
+		c.Run()
+	} else {
+		log.Printf("no task prased, exit")
 	}
-
-	c.Run()
+	return nil
 }
