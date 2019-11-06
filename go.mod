@@ -1,4 +1,4 @@
-module crontasker
+module github.com/boypt/crontasker
 
 go 1.13
 
