@@ -105,23 +105,28 @@ func (t *Task) runWithDeadline() {
 }
 
 func parseTask(line string) (*Task, error) {
-	cset := strings.Split(line, "|")
-	if len(cset) != 3 {
+	cset := strings.Split(line, " ")
+	if len(cset) < 7 {
 		return nil, fmt.Errorf("line len split error, %s", line)
 	}
 
-	last, err := time.ParseDuration(cset[1])
+	// * * * * *
+	spec := strings.Join(cset[:5], " ")
+	// 10m
+	last, err := time.ParseDuration(cset[5])
 	if err != nil {
 		last = 0
 	}
+	cmd := cset[6]
+	args := cset[7:]
 
-	cmds := strings.Split(cset[2], " ")
 	task := &Task{
-		CronSpec: cset[0],
-		Cmd:      cmds[0],
-		Args:     cmds[1:],
+		CronSpec: spec,
+		Cmd:      cmd,
+		Args:     args,
 		LastTime: last,
 	}
+	debugf("task: %v", task)
 	return task, nil
 }
 

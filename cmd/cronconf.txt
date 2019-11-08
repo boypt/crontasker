@@ -1,2 +1,2 @@
-* * * * *|6s|/bin/sleep 5
-0 * * * *|10m|/bin/sleep 5
+* * * * * 6s /bin/sleep 5
+0 * * * * 10m /bin/sleep 5
