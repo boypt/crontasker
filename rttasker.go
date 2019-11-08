@@ -18,6 +18,10 @@ var (
 	debug bool
 )
 
+func SetDebug(set bool) {
+	debug = set
+}
+
 func debugf(format string, args ...interface{}) {
 	if debug {
 		log.Printf("[crontasker]DEBUG "+format, args...)
