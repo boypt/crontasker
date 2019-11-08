@@ -3,16 +3,24 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 
 	"github.com/boypt/crontasker"
 )
 
+var (
+	config string
+	debug  bool
+	ver    string = "0.0.0-src"
+)
+
 func main() {
-	config := ""
 	flag.StringVar(&config, "c", "cronconf.txt", "set configuration `file`")
+	flag.BoolVar(&debug, "debug", false, "show debug log")
 	flag.Parse()
+	fmt.Printf("crontasker ver:%s \n", ver)
 	err := crontasker.CronDaemon(config)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		log.Fatal(err)
 	}
 }

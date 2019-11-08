@@ -14,6 +14,16 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
+var (
+	debug bool
+)
+
+func debugf(format string, args ...interface{}) {
+	if debug {
+		log.Printf("[crontasker]DEBUG "+format, args...)
+	}
+}
+
 type Task struct {
 	CronSpec string
 	LastTime time.Duration
@@ -30,7 +40,7 @@ func (t *Task) Run() {
 }
 
 func (t *Task) runOnce() {
-	log.Printf("Run %s args %v\n", t.Cmd, t.Args)
+	debugf("Run %s args %v\n", t.Cmd, t.Args)
 	cmd := exec.Command(t.Cmd, t.Args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -39,7 +49,7 @@ func (t *Task) runOnce() {
 		log.Printf("Task failed with err, %v", err)
 	}
 
-	log.Printf("Task end")
+	debugf("Task end")
 }
 
 func (t *Task) runWithDeadline() {
@@ -47,7 +57,7 @@ func (t *Task) runWithDeadline() {
 	deadline := time.Now().Add(t.LastTime)
 
 	for {
-		log.Printf("Run %s args %v, endat %v, now %v\n", t.Cmd, t.Args, deadline, time.Now())
+		debugf("Run %s args %v, endat %v, now %v\n", t.Cmd, t.Args, deadline, time.Now())
 		ctx, cancel := context.WithDeadline(context.Background(), deadline)
 
 		cmd := exec.Command(t.Cmd, t.Args...)
@@ -64,7 +74,7 @@ func (t *Task) runWithDeadline() {
 
 		go func() {
 			<-ctx.Done()
-			log.Printf("ctx done")
+			debugf("ctx done")
 			if cmd.Process != nil {
 				// kill Process Group
 				if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL); err != nil {
@@ -87,7 +97,7 @@ func (t *Task) runWithDeadline() {
 		break
 	}
 
-	log.Printf("Task end")
+	debugf("Task end")
 }
 
 func parseTask(line string) (*Task, error) {
@@ -112,7 +122,14 @@ func parseTask(line string) (*Task, error) {
 }
 
 func CronDaemon(conf string) error {
-	c := cron.New(cron.WithLogger(cron.VerbosePrintfLogger(log.New(os.Stdout, "cron: ", log.LstdFlags))))
+	var opts []cron.Option
+
+	if debug {
+		opts = append(opts, cron.WithLogger(
+			cron.VerbosePrintfLogger(log.New(os.Stdout, "crontasker: ", log.LstdFlags))))
+	}
+
+	c := cron.New(opts...)
 
 	log.Printf("config: %s", conf)
 	cf, err := os.Open(conf)
